@@ -1,4 +1,5 @@
 ﻿/*
+ * Вариант 9
  * c - емкость ресурса = 1
  * s - размер ресурса = 1
  * v - цена ресурса = 0
@@ -12,6 +13,8 @@
 
 using System;
 using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 using System.Timers;
 using System.Threading;
 
@@ -22,6 +25,8 @@ namespace ResRegV1cons
     class UnRecommended : Exception { }
     class ResIsBusy : Exception { }
     class ResWasFree : Exception { }
+    class TimeError : Exception { }
+
     static class SetUp
     {
         public static string Path; //путь к файлу, сохраняющему модель
@@ -102,63 +107,56 @@ namespace ResRegV1cons
 
         public static int[] tRes_s; // время использования ресурсов
 
-        public static void Diverse()
-        {
-            int nMinRes = -1;
-            int min = Int32.MaxValue;
-            for (int i = 0; i < vRes_s.Length; i++)
-            {
-                if (vRes_s[i] == "B" && tRes_s[i] < min)
-                {
-                    nMinRes = i + 1;
-                    min = tRes_s[i];
-                }
-            }
-            if(nMinRes == -1)
-            {
-                Console.WriteLine("Все ресурсы свободны");
-                return;
-            }
-            else
-            {
-                Console.WriteLine($"Найден ресурс с наименьшим временем использования ресурса: {nMinRes}");
-                Console.WriteLine("Освобождаем этот ресурс");
-                Free(nMinRes.ToString());
-            }
-
-        }
+        public static List<int> que = new List<int>();
 
         public static void Occupy(string cn)
         {
-            AwaitResponse();
+            if ((Convert.ToInt32(cn) > Int32.MaxValue) | (Convert.ToInt32(cn) < 0)) throw new TimeError();
+            for(int i = 0; i < vRes_s.Length; i++)
+            {
+                if (vRes_s[i] == "F") 
+                {
+                    vRes_s[i] = "B";
+                    tRes_s[i] = Convert.ToInt32(cn); 
+                    return;
+                }
+            }
+            Console.WriteLine("Все ресурсы заняты, поместим данный запрос в очередь");
+            que.Add(Convert.ToInt32(cn));
+            que.Sort();
+        }
+
+        /*public static void Occupy(string cn)
+        {
             if ((Convert.ToInt16(cn) > vRes_s.Length) | (Convert.ToInt16(cn) < 0)) throw new ResIdInvalid();
             if (vRes_s[Convert.ToInt16(cn) - 1] == "B") throw new ResIsBusy();
             vRes_s[Convert.ToInt16(cn) - 1] = "B";
-            tRes_s[Convert.ToInt16(cn) - 1] = 0;
-        }
+            Console.WriteLine("Введите время обслуживания ресурса: ");
+            string time = Console.ReadLine();
+            if ((Convert.ToInt32(time) > Int32.MaxValue) | (Convert.ToInt32(time) < 0)) throw new ResIdInvalid();
+            tRes_s[Convert.ToInt16(cn) - 1] = Convert.ToInt32(time);
+        }*/
         public static void Free(string cn)
         {
-            AwaitResponse();
             if ((Convert.ToInt16(cn) > vRes_s.Length) | (Convert.ToInt16(cn) < 0)) throw new ResIdInvalid();
             if (vRes_s[Convert.ToInt16(cn) - 1] == "F") throw new ResWasFree();
-            Console.WriteLine($"Время использования освобожденного ресурса: {tRes_s[Convert.ToInt16(cn) - 1]}");
             vRes_s[Convert.ToInt16(cn) - 1] = "F";
             tRes_s[Convert.ToInt16(cn) - 1] = 0;
+            if(que.Count != 0)
+            {
+                Occupy(Convert.ToString(que[0]));
+                Console.WriteLine("Ресурс с остаточным временем " + que[0] + " помещен на обслуживание");
+                Console.WriteLine("Введите команду:");
+                que.RemoveAt(0);
+            }
         }
         public static string Request()
         {
-            AwaitResponse();
             for (int i = 0; i < vRes_s.Length; i++)
             {
                 if (vRes_s[i] == "F") return Convert.ToString(i + 1);
             }
             throw new ResAreBusy(); ;
-        }
-
-        private static void AwaitResponse()
-        {
-            Console.WriteLine("Ожидание...");
-            Thread.Sleep(1000);
         }
 
         public static void SetTimer()
@@ -171,7 +169,22 @@ namespace ResRegV1cons
 
         private static void OnTimerEvent(Object source, ElapsedEventArgs e)
         {
-            for (int i = 0; i < tRes_s.Length; i++) if(vRes_s[i] == "B") tRes_s[i]++;
+            for (int i = 0; i < tRes_s.Length; i++) 
+            {
+                if(vRes_s[i] == "B" && tRes_s[i] > 0) 
+                {
+                    if (--tRes_s[i] == 0) 
+                    {
+                        Console.WriteLine($"Время обслуживания ресурса {i + 1} закончено. Ресурс освобожден.");
+                        Free(Convert.ToString(i + 1));
+//                        Console.WriteLine("Введите команду:");
+                    }
+                }
+            }
+            for(int i = 0; i < que.Count; i++)
+            {
+                if(--que[i] == 0) que.RemoveAt(i);
+            }
         }
     }
     class Program
@@ -192,20 +205,16 @@ namespace ResRegV1cons
                     if (Command == "REQUEST") Console.WriteLine(Model.Request());
                     if (Command == "OCCUPY")
                     {
-                        Console.WriteLine("Введите номер ресурса:");
+                        Console.WriteLine("Введите время использования ресурса:");
                         Model.Occupy(Console.ReadLine());
-                        Console.WriteLine("Ресурс стал занятым.");
+                        //Console.WriteLine("Ресурс стал занятым.");
                     };
-                    if (Command == "FREE")
+                    /*if (Command == "FREE")
                     {
                         Console.WriteLine("Введите номер ресурса:");
                         Model.Free(Console.ReadLine());
                         Console.WriteLine("Ресурс освобождён.");
-                    };
-                    if (Command == "DIVERSE")
-                    {
-                        Model.Diverse();
-                    };
+                    };*/
                 }
                 catch (OverflowException) { Console.WriteLine("Такого ресурса нет."); }
                 catch (FormatException) { Console.WriteLine("Такого ресурса нет."); }
@@ -213,6 +222,7 @@ namespace ResRegV1cons
                 catch (ResWasFree) { Console.WriteLine("Ресурс был свободен."); }
                 catch (ResAreBusy) { Console.WriteLine("Все ресурсы заняты."); }
                 catch (ResIsBusy) { Console.WriteLine("ресурс уже занят."); }
+                catch (TimeError) { Console.WriteLine("Некорректное время использования ресурса"); }
             }
             while (Command != "");
         }
