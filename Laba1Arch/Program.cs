@@ -36,7 +36,7 @@ namespace ResRegV1cons
             Console.WriteLine("Укажите количество ресурсов:");
             try
             {
-                int size = Convert.ToInt32(Console.ReadLine());
+                int size = Convert.ToInt32(Console.ReadLine());				   				 
                 Model.vRes_s = new string[size];
                 Model.tRes_s = new int[size];
                 for (int i = 0; i < Model.vRes_s.Length; i++) { Model.vRes_s[i] = "F"; Model.tRes_s[i] = 0; }
@@ -125,17 +125,6 @@ namespace ResRegV1cons
             que.Add(Convert.ToInt32(cn));
             que.Sort();
         }
-
-        /*public static void Occupy(string cn)
-        {
-            if ((Convert.ToInt16(cn) > vRes_s.Length) | (Convert.ToInt16(cn) < 0)) throw new ResIdInvalid();
-            if (vRes_s[Convert.ToInt16(cn) - 1] == "B") throw new ResIsBusy();
-            vRes_s[Convert.ToInt16(cn) - 1] = "B";
-            Console.WriteLine("Введите время обслуживания ресурса: ");
-            string time = Console.ReadLine();
-            if ((Convert.ToInt32(time) > Int32.MaxValue) | (Convert.ToInt32(time) < 0)) throw new ResIdInvalid();
-            tRes_s[Convert.ToInt16(cn) - 1] = Convert.ToInt32(time);
-        }*/
         public static void Free(string cn)
         {
             if ((Convert.ToInt16(cn) > vRes_s.Length) | (Convert.ToInt16(cn) < 0)) throw new ResIdInvalid();
@@ -177,7 +166,6 @@ namespace ResRegV1cons
                     {
                         Console.WriteLine($"Время обслуживания ресурса {i + 1} закончено. Ресурс освобожден.");
                         Free(Convert.ToString(i + 1));
-//                        Console.WriteLine("Введите команду:");
                     }
                 }
             }
@@ -196,7 +184,7 @@ namespace ResRegV1cons
             Model.SetTimer();
             do
             {
-                File.WriteAllLines(SetUp.Path, Model.vRes_s);//сохранение модели
+                File.WriteAllLines(SetUp.Path, Model.vRes_s);
                 Console.WriteLine("Введите команду:");
                 Command = Console.ReadLine();
                 Command = Command.ToUpper();
@@ -207,14 +195,7 @@ namespace ResRegV1cons
                     {
                         Console.WriteLine("Введите время использования ресурса:");
                         Model.Occupy(Console.ReadLine());
-                        //Console.WriteLine("Ресурс стал занятым.");
                     };
-                    /*if (Command == "FREE")
-                    {
-                        Console.WriteLine("Введите номер ресурса:");
-                        Model.Free(Console.ReadLine());
-                        Console.WriteLine("Ресурс освобождён.");
-                    };*/
                 }
                 catch (OverflowException) { Console.WriteLine("Такого ресурса нет."); }
                 catch (FormatException) { Console.WriteLine("Такого ресурса нет."); }
